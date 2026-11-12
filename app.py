@@ -214,10 +214,16 @@ if page == "Give feedback":
             st.success("Your feedback has been submitted. Thank you for taking the time.")
 
         with st.form("feedback_form", clear_on_submit=True):
-            student_column, course_column = st.columns(2, gap="medium")
+            student_column, id_column, course_column = st.columns(3, gap="small")
             with student_column:
                 student_name = st.text_input(
                     "Student name *", max_chars=120, placeholder="Your name"
+                )
+            with id_column:
+                student_id = st.text_input(
+                    "Student ID (optional)",
+                    max_chars=80,
+                    placeholder="Add if you wish",
                 )
             with course_column:
                 course_name = st.text_input(
@@ -251,6 +257,7 @@ if page == "Give feedback":
                         course_name=course_name.strip(),
                         rating=int(rating),
                         comments=comments.strip() or None,
+                        student_id=student_id.strip() or None,
                     )
                 except ValueError as error:
                     st.error(f"Please check your submission: {error}")
@@ -291,7 +298,7 @@ elif page == "Responses":
             selected_course = st.selectbox("Course", ["All courses", *courses])
         with search_column:
             search_text = st.text_input(
-                "Search name or comment", placeholder="Type to filter responses"
+                "Search name, ID or comment", placeholder="Type to filter responses"
             )
 
         filtered_feedback = feedback
@@ -305,6 +312,9 @@ elif page == "Responses":
                 filtered_feedback["student_name"].str.contains(
                     term, case=False, regex=False, na=False
                 )
+                | filtered_feedback["student_id"].fillna("").str.contains(
+                    term, case=False, regex=False, na=False
+                )
                 | filtered_feedback["comments"].fillna("").str.contains(
                     term, case=False, regex=False, na=False
                 )
@@ -313,8 +323,9 @@ elif page == "Responses":
 
         display_feedback = filtered_feedback.iloc[::-1].rename(
             columns={
-                "feedback_id": "ID",
+                "feedback_id": "Response ID",
                 "student_name": "Student",
+                "student_id": "Student ID",
                 "course_name": "Course",
                 "rating": "Rating",
                 "comments": "Comments",
